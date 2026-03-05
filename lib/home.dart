@@ -152,7 +152,7 @@ class _CalculatorAppState extends State<CalculatorApp> {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               Container(
-                width: 280,
+                width: 360,
                 decoration: BoxDecoration(
                   color: Colors.white,
                   border: Border.all(color: kPink, width: 4),

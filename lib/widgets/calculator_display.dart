@@ -12,17 +12,25 @@ class CalculatorDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 360,
-      decoration: BoxDecoration(
-        color: AppColors.displayBackground,
-        border: Border.all(color: AppColors.primary, width: 4),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Center(
-        child: Text(
-          display,
-          style: AppStyles.displayText,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppColors.displayBackground,
+          border: Border.all(color: AppColors.primary, width: 4),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Align(
+          alignment: Alignment.centerRight,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              display,
+              style: AppStyles.displayText,
+            ),
+          ),
         ),
       ),
     );

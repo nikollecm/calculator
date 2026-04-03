@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../constants/app_colors.dart';
 import '../models/calculator_state.dart';
 import '../services/calculator_service.dart';
 import '../widgets/calculator_button.dart';
@@ -13,7 +12,7 @@ class CalculatorScreen extends StatefulWidget {
 }
 
 class _CalculatorScreenState extends State<CalculatorScreen> {
-  CalculatorState _state = CalculatorState();
+  final CalculatorState _state = CalculatorState();
 
   void _onButtonTap(String buttonText) {
     setState(() {
@@ -34,8 +33,10 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   }
 
   void _handleOperator(String operator) {
+    if (_state.display == 'Error') return;
     if (_state.firstNumber.isNotEmpty && _state.display.isNotEmpty) {
       _calculate();
+      if (_state.display == 'Error') return;
     }
     _state.firstNumber = _state.display;
     _state.operation = operator;
@@ -43,23 +44,28 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   }
 
   void _handleDecimal() {
+    if (_state.display == 'Error') return;
     if (!_state.display.contains(".")) {
       _state.display = _state.display.isEmpty ? '0.' : '${_state.display}.';
     }
   }
 
   void _handleResult() {
+    if (_state.display == 'Error') return;
     if (_state.firstNumber.isNotEmpty &&
         _state.display.isNotEmpty &&
         _state.operation.isNotEmpty) {
       _state.secondNumber = _state.display;
       _calculate();
-      _state.firstNumber = '';
+      _state.firstNumber = _state.display;
       _state.operation = '';
     }
   }
 
   void _handleNumber(String number) {
+    if (_state.display == 'Error') {
+      _state.clear();
+    }
     if (_state.display.length >= 10) return;
 
     if (_state.display == '0') {
@@ -77,17 +83,21 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       double? result = CalculatorService.calculate(_state.operation, a, b);
 
       if (result == null) {
-        _state.display = '';
+        _state.display = 'Error';
         return;
       }
 
       _state.display = CalculatorService.formatResult(result);
     } catch (e) {
-      _state.display = '';
+      _state.display = 'Error';
     }
   }
 
   void _deleteLastCharacter() {
+    if (_state.display == 'Error') {
+      _state.clear();
+      return;
+    }
     if (_state.display.length > 1) {
       _state.display = _state.display.substring(0, _state.display.length - 1);
     } else {
@@ -102,33 +112,70 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              CalculatorDisplay(display: _state.display),
-            ],
-          ),
-          _buildButtonRow(['C', 'DEL', '%', '/']),
-          _buildButtonRow(['7', '8', '9', '-']),
-          _buildButtonRow(['4', '5', '6', '+']),
-          _buildButtonRow(['1', '2', '3', 'X']),
-          _buildButtonRow(['0', '.', 'RESULT']),
+          CalculatorDisplay(display: _state.display),
+          _buildRow([
+            _btn('C', flex: 1, type: ButtonType.utility),
+            _btn('DEL', flex: 2, type: ButtonType.utility),
+            _btn('%', flex: 1, type: ButtonType.operator),
+            _btn('/', flex: 1, type: ButtonType.operator),
+          ]),
+          _buildRow([
+            _btn('7'),
+            _btn('8'),
+            _btn('9'),
+            _btn('-', type: ButtonType.operator),
+          ]),
+          _buildRow([
+            _btn('4'),
+            _btn('5'),
+            _btn('6'),
+            _btn('+', type: ButtonType.operator),
+          ]),
+          _buildRow([
+            _btn('1'),
+            _btn('2'),
+            _btn('3'),
+            _btn('X', type: ButtonType.operator),
+          ]),
+          _buildRow([
+            _btn('0'),
+            _btn('.'),
+            _btn('RESULT', flex: 2, type: ButtonType.result),
+          ]),
         ],
       ),
     );
   }
 
-  Widget _buildButtonRow(List<String> buttons) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: buttons
-          .map((text) => SizedBox(
-                child: CalculatorButton(
-                  text: text,
-                  onPressed: () => _onButtonTap(text),
+  ({String text, int flex, ButtonType type}) _btn(
+    String text, {
+    int flex = 1,
+    ButtonType type = ButtonType.number,
+  }) => (text: text, flex: flex, type: type);
+
+  Widget _buildRow(List<({String text, int flex, ButtonType type})> buttons) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 30),
+      child: Row(
+        children: buttons
+            .map(
+              (entry) => Expanded(
+                flex: entry.flex,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: CalculatorButton(
+                    text: entry.text,
+                    type: entry.type,
+                    isActive:
+                        entry.type == ButtonType.operator &&
+                        _state.operation == entry.text,
+                    onPressed: () => _onButtonTap(entry.text),
+                  ),
                 ),
-              ))
-          .toList(),
+              ),
+            )
+            .toList(),
+      ),
     );
   }
 }
